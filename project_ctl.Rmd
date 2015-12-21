@@ -5,58 +5,48 @@ date: "December 20, 2015"
 output: pdf_document
 ---
 
+# Study
+
 ## Overview
 The goal of this project is to investigate exponential distribution compared to distribution of averages of 40 exponentials, as these according to Central Limit Theorem should approximate normal distribution. I will test this via 1000 simulations of drawing 40 random exponentials with set parametr lambda ($\lambda$ = 0.2). In the instruction there is useful information about the mean of exponential distribution (mean = 1/$\lambda$) and the standard deviation of same distribution (sd = 1/$\lambda$).
 
 ## Simulations
 
-### Setting the environment
+### Setting the environment and creating dataset
 
 ```{r libraries, warning=FALSE, message=FALSE}
 #load necessary libraries:
-library(ggplot2)
-library(knitr)
-library(gridExtra)
+library(ggplot2); library(gridExtra); library(knitr)
 
-# Set the lambda to 0.2:
+# Set lambda, number of simulations and drawn samples:
 lambda <- 0.2
-
-# Set the number of simulations:
 n_simulations <- 1000
-
-# Set the number of drawn samples:
 n <- 40
 
 # Set random seed, so that the conclusion will be valid for every run of knitr:
 set.seed(12345)
-```
 
-### Simulation
-
-```{r simulation}
-# Random exponential variables:
+# Create random exponential variables:
 sim_vars <- matrix(data=rexp(n*n_simulations, rate=lambda), nrow=n_simulations, ncol=n)
 
-# Means:
+# Create means:
 sim_means <- rowMeans(sim_vars)
 ```
 
 
 ##  Sample Mean versus Theoretical Mean
-*Show the sample mean and compare it to the theoretical mean of the distribution.*
-
 The mean of simulated averages can be safely computed by base function mean(). As was stated in overview, the theoretical mean of exponential distribution is 1/$\lambda$, with $\lambda$ = 0.2.  
 
 ```{r sim_mean}
 means<-data.frame("Mean"=c(mean(sim_means), 1/lambda), 
                   row.names=c("Sample mean", "Theoretical mean"))
-
-kable(x=means, digits=3, align="c", caption="Table of sample and corresponding theoretical mean")
+kable(x=means, digits=3, align="c", caption="Table of sample and 
+      corresponding theoretical mean")
 ```
 
-As we can see, the actual sample mean is not so far from the theoreticaly predicted one. Let's see how it stands in histogram of simulated data.
+As we can see, the actual sample mean is not so far from the theoreticaly predicted one. Let's see how it stands in histogram of simulated data (Fig.1., see Appendix for code).
 
-```{r histogram, message=FALSE} 
+```{r histogram, message=FALSE, echo=FALSE, out.height="7cm"} 
 ggplot(as.data.frame(sim_means), aes(sim_means)) + 
   geom_histogram() +
   geom_vline(xintercept=mean(sim_means), colour="red") +
@@ -67,7 +57,6 @@ ggplot(as.data.frame(sim_means), aes(sim_means)) +
 ```
 
 ## Sample Variance versus Theoretical Variance
-*Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.*
 According to Wikipedia (https://en.wikipedia.org/wiki/Variance#Exponential_distribution), the variance of exponential distributed random variable is equal to its mean to the power of two:
 $\sigma^2$ = $\mu^2$.
  
@@ -75,23 +64,19 @@ $\sigma^2$ = $\mu^2$.
 var_sim <- (mean(sim_means))^2
 var_theo <- (1/lambda)^2
 
-
 vars<-data.frame("Variances"=c(var_sim, var_theo), 
                 row.names=c("Sample variance", "Theoretical variance"))
-
 kable(x=vars, digits=3, align="c", caption="Table of sample 
       and corresponding theoretical variance")
 ```
 
 
 ## Distribution
-*Show that the distribution is approximately normal. In point 3, focus on the difference between the distribution of a large collection of random exponentials and the distribution of a large collection of averages of 40 exponentials.*
-
 I decided to look into this question by showing the fit of normal curve to the histogram (see plot below) and by testing the normality of averages by Shapiro-Wilk test of normality (at the bottom of the document).
 
-For the first part, there are two histograms. The left one shows the original simulated data (thus showing them as exponentials), the right one shows the drawn averages of 40 exponentials with fitted normal curve for theoretical normal distribution given set lambda.
+For the first part, there are two histograms. The left one shows the original simulated data (thus showing them as exponentials), the right one shows the drawn averages of 40 exponentials with fitted normal curve for theoretical normal distribution given set lambda (Fig. 2., see Appendix for code).
 
-```{r two_histograms, message=FALSE}
+```{r two_histograms, message=FALSE, echo=FALSE}
 # Plot of raw simulated data:
 p1 <- ggplot(as.data.frame(as.vector(sim_vars)), aes(as.vector(sim_vars))) + 
   geom_histogram(aplha=0.5, fill="grey", col="black") +
@@ -124,3 +109,19 @@ The plots are ilustrative, though at least simple test for normality should be d
 shapiro.test(sim_means)
 ```
 Thus I would conclude that the tested collection of averages of 40 exponentials is just approximately normal. Given the lambda and setted random seed, to achieve normality of averages one should use larger dataset (e.g. simulate more data).
+
+
+
+
+# Appendix
+This appendix contains code used for generating plots.
+
+Fig. 1. Histogram of the simulated sample with theoretical (green) and actual (red) sample mean indicated:
+```{r histogram_app, ref.label="histogram", echo=TRUE, eval=FALSE} 
+
+```
+
+Fig. 2. Two histograms, left one of raw exponential data, right one of drawn averages.
+```{r two_histograms_app, ref.label="two_histograms", echo=TRUE, eval=FALSE}
+
+```  
