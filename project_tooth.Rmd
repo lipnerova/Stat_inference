@@ -5,7 +5,10 @@ date: "December 21, 2015"
 output: pdf_document
 ---
 
-Zadání:
+# Info on data:
+The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+
+# Zadání:
 Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package. 
 
 - Load the ToothGrowth data and perform some basic exploratory data analyses 
@@ -24,8 +27,9 @@ Some criteria that you will be evaluated on
 
 ```{r libraries, message=FALSE, warning=FALSE}
 # Load libraries
-library(ggplot2)
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
 library(knitr)
 
 # Load dataset
@@ -37,8 +41,28 @@ a<-(ToothGrowth) #give it easily typed name
 
 # EDA
 
-```{r scatterplot_one}
-ggplot(a, aes(y=len, x=dose, group=supp)) + geom_point() + facet_grid(supp~.)
+```{r boxplots}
+p1 <- ggplot(a, aes(y=len, x=as.factor(supp))) + 
+  geom_boxplot(aes(fill=supp)) + 
+  guides(fill=FALSE) +
+  facet_grid(.~dose) +
+  labs(title="Teeth growth on two supplements 
+       \n by dose (mg/day) of supplement",
+       x="Supplement type",
+       y="Length of teeth") +
+  theme(title = element_text(size = rel(0.75), hjust = 0.5))
+
+
+p2 <- ggplot(a, aes(x=supp, y=len)) + geom_boxplot(aes(fill=supp)) + 
+  labs(title="Overall teeth growth \n on two supplements",
+       x="Supplement type",
+       y="Length of teeth") +
+  scale_fill_discrete(name="Supplement",
+                      labels=c("Orange juice", "Vitamin C")) +
+  theme(title = element_text(size = rel(0.75), hjust = 0.5))
+
+# Arrange them: 
+grid.arrange(p1, p2, ncol=2, nrow=1)
 ```
 
 ```{r tab_one}
@@ -46,6 +70,31 @@ a_tab<-group_by(a, supp, dose) %>% summarise(mean(len))
 kable(x=a_tab, digits=1, align="c", caption="Summary table of data")
 ```
 
+
+# Testing
+
+Test hypothesis, that there is a difference between orange juice and vitamin C (all doses together.
+Test each dose separately for above stated difference => together 4 tests.
+
+## Hypotheses
+Overall test: H0 there is no difference between OJ and VC
+H1: the OJ has bigger effect than VC
 ```{r}
+t.test(len ~ factor(supp), data=a, paired=F) 
+```
+
+PArtial tests - dose 0.5
+```{r}
+# Dose of 0.5 mg/day:
+t.test(len ~ supp, data=a[a$dose==0.5,])
+
+# Dose of 1 mg/day:
+t.test(len ~ supp, data=a[a$dose==1,])
+
+# Dose of 2 mg/day:
+t.test(len ~ supp, data=a[a$dose==2,])
+
 
 ```
+
+udělat tabulku s p hodnotami a CI
