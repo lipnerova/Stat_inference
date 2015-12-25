@@ -1,12 +1,15 @@
 ---
-title: "project_tooth"
-author: "lipnerova"
-date: "December 21, 2015"
+title: "Orange juice or vitamin C - what's a key to sabre-toothed guinea pigs?"
+author: "Ivana Lipnerová"
+date: "December 25, 2015"
 output: pdf_document
 ---
 #Report
 ## Overview
-This study analyse the ToothGrowth data in the R datasets package, aiming for comparing benefits of two diets on growth of teeth. The goals are to provide simple exploratory data analysis, compare two diets and draw a conclusion based on performed tests.
+This study analyse the ToothGrowth data in the R datasets package (McNeil D. R., 1977)^1^, aiming for comparing benefits of two diets on growth of teeth. The goals are to provide simple exploratory data analysis, compare two diets and draw a conclusion based on performed tests.
+
+
+^1^ McNeil, D. R. (1977) _Interactive Data Analysis._ New York: Wiley. 
 
 ## Loading the data
 
@@ -17,21 +20,21 @@ library(dplyr); library(ggplot2); library(gridExtra); library(knitr)
 # Load dataset
 library(datasets)   
 data(ToothGrowth)
-a<-(ToothGrowth) #give it easily typed name
+a <- (ToothGrowth) #give it easily typed name
 ```
 
 
-## Basic xploratory data analyses
-The data contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Animals were divided to 6 groups per 10 pigs, each group was fed with one of two supplements, orange juice (OJ) or ascorbic acid (vitami C, VC), in one of three doses (0.5, 1, or 2 mg/day). The output data has format of 60 observations and 3 variables - __len__ for length of odontoblasts, __sup__ for supplement type, and __dose__ for dose recieved.
+## Basic exploratory data analyses
+The data contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Animals were divided to 6 groups per 10 pigs, each group was fed with one of two supplements, orange juice (OJ) or ascorbic acid (vitamin C, VC), in one of three doses (0.5, 1, or 2 mg/day). The output data has format of 60 observations and 3 variables - __len__ for length of odontoblasts, __sup__ for supplement type, and __dose__ for dose recieved.
 
 ```{r structure}
 str(a) #structure of data
 ```
 
-Boxplots of the data showing the differences and distributions of lengths of odontoblasts for each supplement on the left and for each dose on the right (see Appendix for code).
+Boxplots of the data showing the differences and distributions of lengths of odontoblasts for each supplement on the left and for each supplement per dose on the right (see Appendix for code):
 
 ```{r boxplots, echo=F}
-# Overal boxplot:
+# Overall boxplot:
 p1 <- ggplot(a, aes(x=supp, y=len)) + geom_boxplot(aes(fill=supp)) + 
   labs(title="Boxplot of length \n on two supplements",
        x="Supplement type",
@@ -55,7 +58,7 @@ p2 <- ggplot(a, aes(y=len, x=as.factor(supp))) +
 grid.arrange(p1, p2, ncol=2, nrow=1)
 ```
 
-Table of means of length of odontoblasts for each dose of both supplements.
+Table of means of lengths of odontoblasts for each dose of both supplements:
 ```{r tab_one}
 a_tab<-group_by(a, dose, supp) %>% summarise(mean(len))
 kable(x=a_tab, digits=1, align="c")
@@ -64,26 +67,14 @@ kable(x=a_tab, digits=1, align="c")
 
 ## Testing
 
-I decide to test the difference in teeth growth between supplementing orange juice (OJ) and vitamin C (VC). I use R function _t-test_. Based on EDA I suppose that orange juice gives better results.
+I decide to test the difference in teeth growth between supplementing orange juice (OJ) and vitamin C (VC) via two sample t-tests (R function _t-test_). Based on EDA I suppose that orange juice gives better results.
 
 __Assumptions for testing:__
-* Guinea pigs were selected randomly and each combination of dose and supplement fed to different group of pigs, thus they form independent groups (_paired=FALSE_ as a default of t.test)
-* Lengths of odontoblasts are normal for tested sets of data (see Appendix for testing normality)
-* No info about variance, thus for sake of correctnes t.tests default _var.equal=FALSE_ is used
- 
-  
-__Overall test:__
 
-$\sf{H_{0}}$: there is no difference between OJ and VC
+* Guinea pigs were selected randomly and each combination of dose and supplement fed to different group of pigs, thus they form independent groups (t.tests default _paired=FALSE_ is used)
+* Lengths of odontoblasts have normal distribution for tested sets of data (see Appendix for normality tests)
+* Different variances for each dataset are assumed, as viewed as less harmful then doing otherwise (t.tests default _var.equal=FALSE_ is used)
 
-$\sf{H_{a}}$: the OJ has bigger effect than VC
-
-
-__Partial tests for each dose:__
-
-$\sf{H_{0}}$: there is no difference between OJ and VC for set dose level (e.g., 0.5, 1, and 2 mg/day).
-
-$\sf{H_{a}}$: the OJ has bigger effect than VC for set dose level
 
 ```{r tests}
 # Prepare table of results:
@@ -115,24 +106,39 @@ kable(test_res, digits=3, row.names=T, align="c",
 ```
 
 ## Conclusion 
-There is no statistically significant overall difference between orange juice and vitamin C, however for lower doses (0.5 mg/day and 1 mg/day) the orange juice has more prominent effect on growt of guinea pigs odontoblasts. High dose of 2 mg/day is sufficient to achieve maximum odontoblasts growth no matter the supplement recieved. It also suggests that such a dose of vitamin C is high enough to compensate for whichever advantage the orange juice has at lower dose levels.
+There is no statistically significant overall difference between orange juice and vitamin C, however for lower doses (0.5 mg/day and 1 mg/day) the orange juice has more prominent effect on growth of guinea pigs odontoblasts. High dose of 2 mg/day is sufficient to achieve maximum odontoblasts growth no matter the supplement recieved. It also suggests that such a dose of vitamin C is high enough to compensate for whichever advantage the orange juice has at lower dose levels.
+
+So, to increase chance of creating a breed of sabre-toothed guinea pigs, one should feed them up with either orange juice or ascorbic acid.
 
 
 # Appendix
-
-Code for cerating boxplots on page 2:
+## Boxplots code
+Code for creating boxplots on page 2:
 ```{r boxplots_app, ref.label="boxplots", eval=F}
 ```
 
+## Normality testing
+
 I utilize the Shapiro-Wilk test of normality to test whether the data follow normal distribution (or at least are not so far from normality). Note that for Shapiro-Wilk test of normality the p-value lower than 0.01 indicates non-normal distribution of tested data.
-```{r normality, eval=F}
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 0.5]) 
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 1]) 
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 2])
-shapiro.test(a$len[a$supp=="VC" & a$dose == 0.5]) 
-shapiro.test(a$len[a$supp=="VC" & a$dose == 1]) 
-shapiro.test(a$len[a$supp=="VC" & a$dose == 2]) 
-shapiro.test(a$len[a$supp=="OJ"]) 
-shapiro.test(a$len[a$supp=="VC"]) 
-shapiro.test(a$len) 
+
+```{r normality}
+# Crude code for generating table:
+shap_tests<-as.data.frame(shapiro.test(a$len[a$supp=="OJ" & a$dose == 0.5])[c(4, 2)])
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="OJ" &
+                                                                 a$dose == 1])[c(4, 2)])) 
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="OJ" &
+                                                                 a$dose == 2])[c(4, 2)]))
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="VC" &
+                                                                 a$dose == 0.5])[c(4, 2)]))
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="VC" &
+                                                                 a$dose == 1])[c(4, 2)]))
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="VC" &
+                                                                 a$dose == 2])[c(4, 2)]))
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="OJ"])[c(4, 2)]))
+shap_tests<-rbind(shap_tests, as.data.frame(shapiro.test(a$len[a$supp=="VC"])[c(4, 2)] ))
+
+
+kable(shap_tests, digits = 3, align="l", col.names = c("Tested dataset", "p-value"))
 ```
+ 
+All datasets, except dataset containing whole OJ related data, are insignificant, thus normally distributed. The exception is only weakly significant and therefore taken as approximately normal for purpose of t-test.
