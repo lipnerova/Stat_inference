@@ -4,33 +4,17 @@ author: "lipnerova"
 date: "December 21, 2015"
 output: pdf_document
 ---
+#Report
+## Overview
+This study analyse the ToothGrowth data in the R datasets package, aiming for comparing benefits of two diets on growth of teeth. The goals are to provide simple exploratory data analysis, compare two diets and draw a conclusion based on performed tests.
 
-# Info on data:
-The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+The data contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Animals were divided to 6 groups per 10 pigs, each group was fed with one of two supplements, orange juice (OJ) or ascorbic acid (vitami C, VC), in one of three doses (0.5, 1, or 2 mg/day). The output data has format of 60 observations and 3 variables - __len__ for length of odontoblasts, __sup__ for supplement type, and __dose__ for dose recieved.
 
-# Zadání:
-Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package. 
-
-- Load the ToothGrowth data and perform some basic exploratory data analyses 
-- Provide a basic summary of the data.
-- Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
-- State your conclusions and the assumptions needed for your conclusions. 
-
-Some criteria that you will be evaluated on
-
-- Did you  perform an exploratory data analysis of at least a single plot or table highlighting basic features of the data?
-- Did the student perform some relevant confidence intervals and/or tests?
-- Were the results of the tests and/or intervals interpreted in the context of the problem correctly? 
-- Did the student describe the assumptions needed for their conclusions?
-    
 ## Loading the data
 
 ```{r libraries, message=FALSE, warning=FALSE}
 # Load libraries
-library(dplyr)
-library(ggplot2)
-library(gridExtra)
-library(knitr)
+library(dplyr); library(ggplot2); library(gridExtra); library(knitr)
 
 # Load dataset
 library(datasets)   
@@ -77,24 +61,73 @@ Test hypothesis, that there is a difference between orange juice and vitamin C (
 Test each dose separately for above stated difference => together 4 tests.
 
 ## Hypotheses
-Overall test: H0 there is no difference between OJ and VC
-H1: the OJ has bigger effect than VC
-```{r}
-t.test(len ~ factor(supp), data=a, paired=F) 
+
+I decide to test the difference in teeth growth between supplementing orange juice (OJ) and vitamin C (VC). I use R function _t-test_. Based on EDA I suppose that orange juice gives better results.
+
+__Assumptions for testing:__
+* Guinea pigs were selected randomly and each combination of dose and supplement fed to different group of pigs, thus they form independent groups (_paired=FALSE_ as a default of t.test)
+* Lengths of odontoblasts are normal for tested sets of data (see Appendix for testing normality)
+* No info about variance, thus for sake of correctnes t.tests default _var.equal=FALSE_ is used
+ 
+  
+__Overall test:__
+
+$\sf{H_{0}}$: there is no difference between OJ and VC
+
+$\sf{H_{a}}$: the OJ has bigger effect than VC
+
+
+__Partial tests for each dose:__
+
+$\sf{H_{0}}$: there is no difference between OJ and VC for set dose level (e.g., 0.5, 1, and 2 mg/day).
+
+$\sf{H_{a}}$: the OJ has bigger effect than VC for set dose level
+
+```{r tests}
+# Prepare table of results:
+test_res <- NULL
+
+# Test OJ vs VC overall:  
+test_res<-cbind(t.test(len ~ factor(supp), data=a, paired=F)$p.value, 
+    t.test(len ~ factor(supp), data=a, paired=F)$conf.int[1],
+    t.test(len ~ factor(supp), data=a, paired=F)$conf.int[2])
+
+# Test OJ vs VC for each dose:  
+for (i in c(0.5, 1, 2)) {
+    test_res <- rbind(test_res, 
+                cbind(t.test(len ~ factor(supp), data=a[a$dose== i, ], 
+                             paired=F)$p.value, 
+                      t.test(len ~ factor(supp), data=a[a$dose== i, ], 
+                             paired=F)$conf.int[1],
+                      t.test(len ~ factor(supp), data=a[a$dose== i, ], 
+                             paired=F)$conf.int[2]
+                      )
+                      )
+  }
+
+# Format table of results:    
+test_res<-as.data.frame(test_res)
+row.names(test_res)<-c("OJ vs VC overall", "OJ vs VC - dose 0.5", 
+              "OJ vs VC - dose 1.0", "OJ vs VC - dose 2.0")
+colnames(test_res)<-c("p-value", "95% CI (-)", "95% CI (+)")
+
+# Print table of results:
+kable(test_res, digits=3, row.names=T, align="c", 
+      caption="Summary table of test results")
 ```
 
-PArtial tests - dose 0.5
-```{r}
-# Dose of 0.5 mg/day:
-t.test(len ~ supp, data=a[a$dose==0.5,])
-
-# Dose of 1 mg/day:
-t.test(len ~ supp, data=a[a$dose==1,])
-
-# Dose of 2 mg/day:
-t.test(len ~ supp, data=a[a$dose==2,])
+There is no statistically significant overall difference between orange juice and vitamin C, however for lower doses (0.5 mg/day and 1 mg/day) the orange juice gives has more prominent effect on growt of guinea pigs odontoblasts. High dose of 2 mg/day of one or other supplement is sufficient to achieve maximum odontoblasts growth, e.g. such a dose of vitamin C is high enough to compensate for whichever advantage the orange juice has at lower dose levels.
 
 
+# Appendix
+```{r normality, eval=F}
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 0.5]) #norm
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 1]) #norm
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 2]) #norm
+shapiro.test(a$len[a$supp=="VC" & a$dose == 0.5]) #norm
+shapiro.test(a$len[a$supp=="VC" & a$dose == 1]) #norm
+shapiro.test(a$len[a$supp=="VC" & a$dose == 2]) #norm
+shapiro.test(a$len[a$supp=="OJ"]) #norm
+shapiro.test(a$len[a$supp=="VC"]) #norm
+shapiro.test(a$len) #norm
 ```
-
-udělat tabulku s p hodnotami a CI
