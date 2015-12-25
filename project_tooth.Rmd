@@ -8,8 +8,6 @@ output: pdf_document
 ## Overview
 This study analyse the ToothGrowth data in the R datasets package, aiming for comparing benefits of two diets on growth of teeth. The goals are to provide simple exploratory data analysis, compare two diets and draw a conclusion based on performed tests.
 
-The data contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Animals were divided to 6 groups per 10 pigs, each group was fed with one of two supplements, orange juice (OJ) or ascorbic acid (vitami C, VC), in one of three doses (0.5, 1, or 2 mg/day). The output data has format of 60 observations and 3 variables - __len__ for length of odontoblasts, __sup__ for supplement type, and __dose__ for dose recieved.
-
 ## Loading the data
 
 ```{r libraries, message=FALSE, warning=FALSE}
@@ -23,44 +21,48 @@ a<-(ToothGrowth) #give it easily typed name
 ```
 
 
-# EDA
+## Basic xploratory data analyses
+The data contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Animals were divided to 6 groups per 10 pigs, each group was fed with one of two supplements, orange juice (OJ) or ascorbic acid (vitami C, VC), in one of three doses (0.5, 1, or 2 mg/day). The output data has format of 60 observations and 3 variables - __len__ for length of odontoblasts, __sup__ for supplement type, and __dose__ for dose recieved.
 
-```{r boxplots}
-p1 <- ggplot(a, aes(y=len, x=as.factor(supp))) + 
-  geom_boxplot(aes(fill=supp)) + 
-  guides(fill=FALSE) +
-  facet_grid(.~dose) +
-  labs(title="Teeth growth on two supplements 
-       \n by dose (mg/day) of supplement",
-       x="Supplement type",
-       y="Length of teeth") +
-  theme(title = element_text(size = rel(0.75), hjust = 0.5))
+```{r structure}
+str(a) #structure of data
+```
 
+Boxplots of the data showing the differences and distributions of lengths of odontoblasts for each supplement on the left and for each dose on the right (see Appendix for code).
 
-p2 <- ggplot(a, aes(x=supp, y=len)) + geom_boxplot(aes(fill=supp)) + 
-  labs(title="Overall teeth growth \n on two supplements",
+```{r boxplots, echo=F}
+# Overal boxplot:
+p1 <- ggplot(a, aes(x=supp, y=len)) + geom_boxplot(aes(fill=supp)) + 
+  labs(title="Boxplot of length \n on two supplements",
        x="Supplement type",
        y="Length of teeth") +
   scale_fill_discrete(name="Supplement",
-                      labels=c("Orange juice", "Vitamin C")) +
+                    labels=c("Orange juice", "Vitamin C")) +
+  theme(title = element_text(size = rel(0.75), hjust = 0.5))
+
+# Dose boxplot:
+p2 <- ggplot(a, aes(y=len, x=as.factor(supp))) + 
+  geom_boxplot(aes(fill=supp)) + 
+  guides(fill=FALSE) +
+  facet_grid(.~dose) +
+  labs(title="Boxplot of length on two supplements 
+       \n splitted by dose (mg/day)",
+       x="Supplement type",
+       y="Length of teeth") +
   theme(title = element_text(size = rel(0.75), hjust = 0.5))
 
 # Arrange them: 
 grid.arrange(p1, p2, ncol=2, nrow=1)
 ```
 
+Table of means of length of odontoblasts for each dose of both supplements.
 ```{r tab_one}
-a_tab<-group_by(a, supp, dose) %>% summarise(mean(len))
-kable(x=a_tab, digits=1, align="c", caption="Summary table of data")
+a_tab<-group_by(a, dose, supp) %>% summarise(mean(len))
+kable(x=a_tab, digits=1, align="c")
 ```
 
 
-# Testing
-
-Test hypothesis, that there is a difference between orange juice and vitamin C (all doses together.
-Test each dose separately for above stated difference => together 4 tests.
-
-## Hypotheses
+## Testing
 
 I decide to test the difference in teeth growth between supplementing orange juice (OJ) and vitamin C (VC). I use R function _t-test_. Based on EDA I suppose that orange juice gives better results.
 
@@ -93,16 +95,12 @@ test_res<-cbind(t.test(len ~ factor(supp), data=a, paired=F)$p.value,
     t.test(len ~ factor(supp), data=a, paired=F)$conf.int[2])
 
 # Test OJ vs VC for each dose:  
-for (i in c(0.5, 1, 2)) {
-    test_res <- rbind(test_res, 
-                cbind(t.test(len ~ factor(supp), data=a[a$dose== i, ], 
-                             paired=F)$p.value, 
-                      t.test(len ~ factor(supp), data=a[a$dose== i, ], 
-                             paired=F)$conf.int[1],
-                      t.test(len ~ factor(supp), data=a[a$dose== i, ], 
-                             paired=F)$conf.int[2]
-                      )
-                      )
+for (i in c(0.5, 1, 2)) { #loop for obtaining just wanted numbers
+  test_res <- rbind(test_res, 
+              cbind(t.test(len ~ factor(supp), data=a[a$dose== i, ], paired=F)$p.value, 
+                    t.test(len ~ factor(supp), data=a[a$dose== i, ], paired=F)$conf.int[1],
+                    t.test(len ~ factor(supp), data=a[a$dose== i, ], paired=F)$conf.int[2]
+                    ))
   }
 
 # Format table of results:    
@@ -116,18 +114,25 @@ kable(test_res, digits=3, row.names=T, align="c",
       caption="Summary table of test results")
 ```
 
-There is no statistically significant overall difference between orange juice and vitamin C, however for lower doses (0.5 mg/day and 1 mg/day) the orange juice gives has more prominent effect on growt of guinea pigs odontoblasts. High dose of 2 mg/day of one or other supplement is sufficient to achieve maximum odontoblasts growth, e.g. such a dose of vitamin C is high enough to compensate for whichever advantage the orange juice has at lower dose levels.
+## Conclusion 
+There is no statistically significant overall difference between orange juice and vitamin C, however for lower doses (0.5 mg/day and 1 mg/day) the orange juice has more prominent effect on growt of guinea pigs odontoblasts. High dose of 2 mg/day is sufficient to achieve maximum odontoblasts growth no matter the supplement recieved. It also suggests that such a dose of vitamin C is high enough to compensate for whichever advantage the orange juice has at lower dose levels.
 
 
 # Appendix
+
+Code for cerating boxplots on page 2:
+```{r boxplots_app, ref.label="boxplots", eval=F}
+```
+
+I utilize the Shapiro-Wilk test of normality to test whether the data follow normal distribution (or at least are not so far from normality). Note that for Shapiro-Wilk test of normality the p-value lower than 0.01 indicates non-normal distribution of tested data.
 ```{r normality, eval=F}
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 0.5]) #norm
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 1]) #norm
-shapiro.test(a$len[a$supp=="OJ" & a$dose == 2]) #norm
-shapiro.test(a$len[a$supp=="VC" & a$dose == 0.5]) #norm
-shapiro.test(a$len[a$supp=="VC" & a$dose == 1]) #norm
-shapiro.test(a$len[a$supp=="VC" & a$dose == 2]) #norm
-shapiro.test(a$len[a$supp=="OJ"]) #norm
-shapiro.test(a$len[a$supp=="VC"]) #norm
-shapiro.test(a$len) #norm
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 0.5]) 
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 1]) 
+shapiro.test(a$len[a$supp=="OJ" & a$dose == 2])
+shapiro.test(a$len[a$supp=="VC" & a$dose == 0.5]) 
+shapiro.test(a$len[a$supp=="VC" & a$dose == 1]) 
+shapiro.test(a$len[a$supp=="VC" & a$dose == 2]) 
+shapiro.test(a$len[a$supp=="OJ"]) 
+shapiro.test(a$len[a$supp=="VC"]) 
+shapiro.test(a$len) 
 ```
