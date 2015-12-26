@@ -90,7 +90,7 @@ p2 <- ggplot(as.data.frame(sim_means), aes(sim_means)) +
   geom_histogram(aes(y=..density..), aplha=0.5, fill="grey", col="black") +
       #that aes() necessary for normal curve displayed correctly
   stat_function(fun=dnorm, colour="red", lwd=1, 
-                args=list(mean = 1/lambda, sd = sqrt(var_theo/n))) +
+                args=list(mean = 1/lambda, sd = sqrt(var_theo))) +
       #necessary  manualy set mean and sd for a curve
   labs(title="Histogram of large collection 
 of averages of 40 exponentials
