@@ -12,8 +12,6 @@ The goal of this project is to investigate exponential distribution compared to 
 
 ## Simulations
 
-### Setting the environment and creating dataset
-
 ```{r libraries, warning=FALSE, message=FALSE}
 #load necessary libraries:
 library(ggplot2); library(gridExtra); library(knitr)
@@ -57,12 +55,13 @@ ggplot(as.data.frame(sim_means), aes(sim_means)) +
 ```
 
 ## Sample Variance versus Theoretical Variance
-According to Wikipedia (https://en.wikipedia.org/wiki/Variance#Exponential_distribution), the variance of exponential distributed random variable is equal to its mean to the power of two:
-$\sigma^2$ = $\mu^2$.
+The variance of simulated averages can be safely computed by base function var(). The theoretical standard deviation of exponential distribution is 1/$\lambda$. Given the Central Limit Theorem, the theoretical variance is
+$$\frac{\sigma^2}{n} = \frac{(1/\lambda)^2}{n}$$
+
  
 ```{r sim_var}
-var_sim <- (mean(sim_means))^2
-var_theo <- (1/lambda)^2
+var_sim <- var(sim_means)
+var_theo <- ((1/lambda)^2)/n
 
 vars<-data.frame("Variances"=c(var_sim, var_theo), 
                 row.names=c("Sample variance", "Theoretical variance"))
@@ -108,6 +107,8 @@ The plots are ilustrative, though at least simple test for normality should be d
 ```{r shapiro}
 shapiro.test(sim_means)
 ```
+
+## Conclusion
 Thus I would conclude that the tested collection of averages of 40 exponentials is just approximately normal. Given the lambda and setted random seed, to achieve normality of averages one should use larger dataset (e.g. simulate more data).
 
 
